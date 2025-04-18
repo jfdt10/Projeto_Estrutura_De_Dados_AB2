@@ -1,8 +1,8 @@
 # Projeto de Estruturas de Dados - AB2
 
-Este repositório referente as quatro entregas desenvolvidas para a disciplina de Estruturas de Dados na UFAL.
+Este repositório reune as quatro entregas desenvolvidas para a disciplina de Estruturas de Dados na UFAL.
 
-**Professor : Márcio Ribeiro
+**Professor:** Márcio Ribeiro
 
 ## Entregas
 
@@ -19,9 +19,9 @@ Este repositório referente as quatro entregas desenvolvidas para a disciplina d
   Contagem e Plotagem Comparativa: Lista Encadeada versus Árvore de Busca Binária (contagem de comparações) com geração de gráficos utilizando R ou Matlab.
 
 ## Organização do Projeto
-
 - Cada entrega está organizada em sua respectiva pasta.
-- **Alunos Integrantes:
+  
+- ## Alunos:
 - Jean Felipe Duarte Tenório
 - Gustavo Romain Batista Carvalho
 - Caio Vinicius Figueiredo de Lima
