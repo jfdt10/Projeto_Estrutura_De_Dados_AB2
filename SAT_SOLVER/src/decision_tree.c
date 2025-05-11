@@ -456,9 +456,3 @@ void liberar_arvore_decisao(ArvoreDecisao *arvore) {
     liberar_no_recursivo(arvore->no_raiz);
     free(arvore);
 }
-
-/*
- * As funções de impressão de depuração (imprimir_atribuicoes_no, 
- * imprimir_arvore_recursivamente, imprimir_arvore_decisao) 
- * e seus comentários Javadoc foram removidos daqui.
- */
