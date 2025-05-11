@@ -1,0 +1,59 @@
+# Ignore operating system generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Ignore build output directories
+build/
+**/build/
+
+# Ignore CMake specific files (if CMake was used or might be used)
+**/CMakeCache.txt
+**/CMakeFiles/
+**/cmake_install.cmake
+**/CMakeLists.txt.user
+**/CTestTestfile.cmake
+**/compile_commands.json
+
+# Ignore object files
+*.o
+src/*.o
+
+# Ignore executables
+*.exe
+src/*.exe
+sat_solver
+verifier
+src/verifier.c # Ignora o código fonte do verifier
+
+# Ignore PDF documents (like lecture notes)
+Aula_21_-_SAT_Solver (1).pdf
+*.pdf
+
+# Ignore specific output or log files
+solution.txt
+verifier_output.txt
+zebra_solution.txt
+*.log
+*.tmp
+*.temp
+
+# Ignore editor/IDE specific files
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Vim swap files and backups
+*.swp
+*~
+*.bak
+
+# Other common ignores
+*.stackdump

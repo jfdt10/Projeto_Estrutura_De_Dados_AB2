@@ -1,0 +1,6 @@
+c Exemplo de fórmula satisfazível (SAT)
+c Este arquivo representa uma fórmula CNF simples com apenas 1 variável
+c A fórmula é simplesmente (x1)
+c Possui solução trivial: x1=true
+p cnf 1 1
+1 0

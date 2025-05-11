@@ -1,0 +1,34 @@
+c unicornpuzzle.cnf
+c
+c Standard Unicorn Puzzle based on AIMA (Russell & Norvig)
+c
+c Variables:
+c   1: Mythical (M)
+c   2: Magical (G)
+c   3: Immortal (I)  (!I means Mortal)
+c   4: Mammal (A)
+c   5: Horned (H)
+c
+c Axioms:
+c 1. If mythical, then immortal: M -> I
+c    Equivalent to: !M v I
+c
+c 2. If not mythical, then mortal and mammal: !M -> (!I & A)
+c    Equivalent to: M v (!I & A)
+c    CNF: (M v !I) & (M v A)
+c
+c 3. If immortal or mammal, then horned: (I v A) -> H
+c    Equivalent to: !(I v A) v H  => (!I & !A) v H
+c    CNF: (!I v H) & (!A v H)
+c
+c 4. Horned if and only if magical: H <-> G
+c    Equivalent to: (!H v G) & (!G v H)
+c
+p cnf 5 7
+-1 3 0
+1 -3 0
+1 4 0
+-3 5 0
+-4 5 0
+-5 2 0
+-2 5 0
