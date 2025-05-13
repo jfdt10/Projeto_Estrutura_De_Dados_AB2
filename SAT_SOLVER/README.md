@@ -12,7 +12,6 @@ sat-solver/
 │   ├── sat.c           # Ponto de entrada principal da aplicação do resolvedor SAT
 │   ├── parser.c        # Funções para analisar a entrada no formato DIMACS
 │   ├── solver.c        # Implementação do algoritmo de resolução SAT (DPLL)
-│   ├── solver.h        # Arquivo de cabeçalho para funções específicas do resolvedor
 │   └── decision_tree.c # Implementação da lógica da árvore de decisão para o resolvedor
 ├── test/
 │   └── test_cases/     # Diretório contendo arquivos .cnf para teste
