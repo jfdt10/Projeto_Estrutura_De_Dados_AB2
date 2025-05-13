@@ -34,19 +34,8 @@ int main(int argc, char *argv[]) {
 
     bool satisfazivel = resolver_sat_com_arvore_otimizada(formula, atribuicoes);
 
-    if (satisfazivel) {
-        printf("SAT!\n"); 
-        for (int i = 1; i <= formula->numero_variaveis; i++) {
-            int valor_saida = (atribuicoes[i] == 2) ? 0 : atribuicoes[i];
-            printf("%d = %d", i, valor_saida);
-            if (i < formula->numero_variaveis) {
-                printf(" ");
-            }
-        }
-        printf("\n");
-    } else {
-        printf("UNSAT!\n");
-    }
+    // Chama a função de impressão unificada em solver.c
+    imprimir_solucao_sat(satisfazivel, atribuicoes, formula->numero_variaveis);
 
     free(atribuicoes);
     liberar_formula_cnf(formula);

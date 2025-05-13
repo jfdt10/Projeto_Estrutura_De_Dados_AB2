@@ -5,7 +5,6 @@
 
 /**
  * @brief Lê uma fórmula CNF de um arquivo no formato DIMACS.
- * Tenta abrir o arquivo diretamente, depois com prefixos "test/" e "test/test_cases/".
  * Realiza duas passagens: a primeira para ler a linha 'p cnf' e obter o número de variáveis e cláusulas,
  * e a segunda para ler as cláusulas em si.
  * @param nome_arquivo O caminho para o arquivo DIMACS.
@@ -14,21 +13,8 @@
 FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) { 
     FILE *arquivo = fopen(nome_arquivo, "r"); 
     
-    // Se o arquivo não puder ser aberto, tenta caminhos alternativos
-    if (!arquivo) {
-        char caminho_alternativo[256]; 
-        
-        // Tenta com o prefixo "test/"
-        snprintf(caminho_alternativo, sizeof(caminho_alternativo), "test/%s", nome_arquivo);
-        arquivo = fopen(caminho_alternativo, "r");
-        
-        // Se ainda falhar, tenta com o prefixo "test/test_cases/"
-        if (!arquivo) {
-            snprintf(caminho_alternativo, sizeof(caminho_alternativo), "test/test_cases/%s", nome_arquivo); // Evita Buffer Overflow onde a string será escrita
-            arquivo = fopen(caminho_alternativo, "r");
-        }
-    }
-    
+    // Agora, o arquivo deve ser encontrado no caminho exato fornecido.
+
     if (!arquivo) {
         fprintf(stderr, "Erro ao abrir arquivo: %s\n", nome_arquivo); 
         return NULL;
@@ -180,15 +166,12 @@ FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) {
                 }
                 
                 num_literais_acumulados = 0; 
-                if (indice_clausula >= formula->numero_clausulas) break; 
             }
             token = strtok(NULL, " \t\n\r");
         }
         free(copia_linha_para_literais);
-        if (indice_clausula >= formula->numero_clausulas) break; 
     }
     free(acumulador_literais);
-    // Ajusta o número de cláusulas para refletir o número real processado (caso tenha sido menor que o esperado).
     // Ajusta o número de cláusulas para refletir o número real processado (caso tenha sido menor que o esperado).
     if (indice_clausula < formula->numero_clausulas) {
         formula->numero_clausulas = indice_clausula; 

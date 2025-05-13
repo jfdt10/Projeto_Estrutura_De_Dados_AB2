@@ -52,23 +52,29 @@ bool resolver_sat_com_arvore_otimizada(FormulaCNF *formula, int *atribuicoes_fin
 }
 
 /**
- * @brief Imprime a solução SAT encontrada para o formato padrão.
- * Imprime "SAT" seguido pelas atribuições de cada variável (ex: "1 = 1 2 = 0 ...").
+ * @brief Imprime o resultado da verificação SAT.
+ * Se satisfatível, imprime "SAT!" seguido pelas atribuições de cada variável.
  * Variáveis não atribuídas (valor 2) são convencionadas para 0 na saída.
- * @param atribuicoes Array de inteiros com as atribuições das variáveis (índice 1 a numero_variaveis).
- * @param numero_variaveis Número total de variáveis.
+ * Se insatisfatível, imprime "UNSAT!".
+ * @param satisfazivel Booleano indicando se a fórmula é satisfatível.
+ * @param atribuicoes Array de inteiros com as atribuições das variáveis (usado apenas se SAT).
+ * @param numero_variaveis Número total de variáveis (usado apenas se SAT).
  */
-void imprimir_solucao_sat(int *atribuicoes, int numero_variaveis) {
-    printf("SAT\n");
-    for (int i = 1; i <= numero_variaveis; i++) {
-        int valor_final = (atribuicoes[i] == 1) ? 1 : 0;
-        if (atribuicoes[i] == 2) { // Se explicitamente não atribuído (valor 2)
-            valor_final = 0; // Convenciona para 0
+void imprimir_solucao_sat(bool satisfazivel, int *atribuicoes, int numero_variaveis) {
+    if (satisfazivel) {
+        printf("SAT!\n");
+        for (int i = 1; i <= numero_variaveis; i++) {
+            int valor_final = (atribuicoes[i] == 1) ? 1 : 0;
+            if (atribuicoes[i] == 2) { // Se explicitamente não atribuído (valor 2)
+                valor_final = 0; // Convenciona para 0
+            }
+            printf("%d = %d", i, valor_final);
+            if (i < numero_variaveis) {
+                printf(" "); // Adiciona espaço entre as atribuições, mas não no final
+            }
         }
-        printf("%d = %d", i, valor_final);
-        if (i < numero_variaveis) {
-            printf(" "); // Adiciona espaço entre as atribuições, mas não no final
-        }
+        printf("\n");
+    } else {
+        printf("UNSAT!\n");
     }
-    printf("\n");
 }

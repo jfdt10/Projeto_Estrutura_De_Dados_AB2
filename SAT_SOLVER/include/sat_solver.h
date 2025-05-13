@@ -82,11 +82,14 @@ void liberar_formula_cnf(FormulaCNF *formula);
  */
 bool resolver_sat_com_arvore_otimizada(FormulaCNF *formula, int *atribuicoes);
 /**
- * @brief Imprime a solução SAT (atribuições de variáveis) no formato padrão.
- * @param atribuicoes Array com as atribuições das variáveis.
- * @param numero_variaveis Número total de variáveis.
+ * @brief Imprime o resultado da verificação SAT.
+ * Se satisfatível, imprime "SAT!" seguido pelas atribuições de cada variável.
+ * Se insatisfatível, imprime "UNSAT!".
+ * @param satisfazivel Booleano indicando se a fórmula é satisfatível.
+ * @param atribuicoes Array com as atribuições das variáveis (usado apenas se SAT).
+ * @param numero_variaveis Número total de variáveis (usado apenas se SAT).
  */
-void imprimir_solucao_sat(int *atribuicoes, int numero_variaveis);
+void imprimir_solucao_sat(bool satisfazivel, int *atribuicoes, int numero_variaveis);
 
 // Funções da árvore binária
 /**
