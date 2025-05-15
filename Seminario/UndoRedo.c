@@ -70,9 +70,7 @@ void undo(Stack *undoStack, Stack *redoStack, char *text) {
 }
 
 void redo(Stack *undoStack, Stack *redoStack, char *text) {
-    if (isStackEmpty(redoStack)){
-        printf("Não há nada para ser refeito");
-    } return;
+    if (isStackEmpty(redoStack)) return;
     
     // Salva o estado atual no undo antes de refazer
     TextState currentState;
