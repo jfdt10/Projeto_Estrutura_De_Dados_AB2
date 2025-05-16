@@ -152,7 +152,7 @@ void criar_arvore_huffman(LISTA *l, ARVORE *a){
 
 }
 
-void imprimir_arvore(NO_HUFFMAN *no_arvore, FILE *saida){
+void escrever_arvore_no_arquivo(NO_HUFFMAN *no_arvore, FILE *saida){
 
     if(no_arvore == NULL) return; // Caso arvore esteja vazia
 
@@ -169,15 +169,15 @@ void imprimir_arvore(NO_HUFFMAN *no_arvore, FILE *saida){
     } else {
         // Nó interno
         fputc('*', saida);
-        imprimir_arvore(no_arvore->esquerda, saida);
-        imprimir_arvore(no_arvore->direita, saida);
+        escrever_arvore_no_arquivo(no_arvore->esquerda, saida);
+        escrever_arvore_no_arquivo(no_arvore->direita, saida);
     }
 }
 
 char* converte_para_binario(unsigned int num, int tam){
     
     int resto = num;
-    char *bits = calloc(tam, sizeof(char));
+    char *bits = calloc((tam + 1), sizeof(char));
     
     for(int i = 0; i < tam; i++){
         
@@ -194,8 +194,27 @@ char* converte_para_binario(unsigned int num, int tam){
         
         j--;
     }
+
+    bits[tam] = '\0';
     
     return bits;
+}
+
+unsigned int binario_para_unsigned_int(char *texto, int quantidade_bits){
+
+    unsigned int soma = 0;
+
+    int aux = quantidade_bits - 1;
+
+    for(int i = 0; i < quantidade_bits; i++){
+
+        soma += (texto[i] - '0') * (int)(pow(2, aux));
+
+        aux--;
+    }
+
+    return soma;
+
 }
 
 void inserir_bytes_no_arquivo(char *texto, int quantidade_bits, FILE *saida){
@@ -305,24 +324,100 @@ void liberar_tabela(char **tabela) {
 
 void escrever_arquivo_compactado(FILE *saida, int trash, unsigned int tam_arvore, NO_HUFFMAN *raiz, char *texto, unsigned int quant_bits_texto){
 
-    char *bits_trash_mais_tam_arv = malloc(16 * sizeof(char)); // 3 bits para o lixo + 13 bits para tamanho da arvore | 16 bits = 2 bytes
+    char *bits_trash_mais_tam_arv = malloc(17 * sizeof(char)); // 3 bits para o lixo + 13 bits para tamanho da arvore | 16 bits = 2 bytes || 1 espaço para '\0'
     bits_trash_mais_tam_arv[0] = '\0';
 
-    strcat(bits_trash_mais_tam_arv, converte_para_binario(trash, 3));
+    char *bits_lixo_03 = converte_para_binario(trash, 3);
+    char *bits_arvore_13 = converte_para_binario(tam_arvore, 13);
 
-    //printf("%s ", bits_trash_mais_tam_arv);
-
-    strcat(bits_trash_mais_tam_arv, converte_para_binario(tam_arvore, 13));
-
-    //printf("%s ", bits_trash_mais_tam_arv);
+    strcat(bits_trash_mais_tam_arv, bits_lixo_03);
+    strcat(bits_trash_mais_tam_arv, bits_arvore_13);
 
     inserir_bytes_no_arquivo(bits_trash_mais_tam_arv, 16, saida);
 
-    imprimir_arvore(raiz, saida);
+    escrever_arvore_no_arquivo(raiz, saida);
 
     inserir_bytes_no_arquivo(texto, quant_bits_texto, saida);
 
     free(bits_trash_mais_tam_arv);
+    free(bits_lixo_03);
+    free(bits_arvore_13);
+}
+
+NO_HUFFMAN* reconstruir_arvore(FILE *arquivo, int tam_arvore){
+
+    unsigned char byte = 0;
+
+    if(tam_arvore == 0){
+
+        return NULL;
+    }
+
+    tam_arvore--;
+
+    fread(&byte, 1, 1, arquivo);
+
+    if(byte == '*') { // NO interno
+        NO_HUFFMAN *no = malloc(sizeof(NO_HUFFMAN));
+        no->byte = '*';
+        no->esquerda = reconstruir_arvore(arquivo, tam_arvore);
+        no->direita = reconstruir_arvore(arquivo, tam_arvore);
+        return no;
+    }
+
+    if (byte == '\\') { // se encontrar o caracter de escape '\' lê o proximo caracter que pode ser a '\' ou '*'
+
+        fread(&byte, 1, 1, arquivo);
+    }
+
+    NO_HUFFMAN *folha = malloc(sizeof(NO_HUFFMAN)); // se não for NO interno é NO folha
+    folha->byte = byte;
+    folha->esquerda = NULL;
+    folha->direita = NULL;
+    return folha;
+
+}
+
+void imprimir_pre_ordem(NO_HUFFMAN *raiz) {
+    if (raiz == NULL) return;
+
+    if (raiz->esquerda == NULL && raiz->direita == NULL) {
+        // Nó folha
+        if (raiz->byte == '*' || raiz->byte == '\\') {
+            printf("\\%c", raiz->byte);  // caractere de escape
+        } else {
+            printf("%c", raiz->byte);
+        }
+    } else {
+        // Nó interno
+        printf("*");
+    }
+
+    imprimir_pre_ordem(raiz->esquerda);
+    imprimir_pre_ordem(raiz->direita);
+}
+
+void descompactar_texto(char *texto_comprimido, NO_HUFFMAN *raiz, int trash, FILE *saida){
+    
+    NO_HUFFMAN *aux = raiz;
+
+    for(int i = 0; i < (strlen(texto_comprimido) - trash); i++){
+
+        if(texto_comprimido[i] == '0'){
+
+            aux = aux->esquerda;
+
+        } else { // então texto_comprimido[i] == '1'
+
+            aux = aux->direita;
+        }
+
+        if(aux->esquerda == NULL && aux->direita == NULL){ // NO FOLHA
+            
+            fputc(aux->byte, saida);
+            aux = raiz;
+        }
+    }
 }
 
 int main(int argc, char *argv[]){ // EX: ./argumentos.exe arquivo02.png | argc = 2 e argv[2] = {"C:\Users\...\argumentos.exe", "arquivo02.png"}
@@ -338,11 +433,14 @@ int main(int argc, char *argv[]){ // EX: ./argumentos.exe arquivo02.png | argc =
     ARVORE arv_huffman; // Conteudo da arvore
 
     unsigned int frequencia[256] = {0}; // unsigned int: inteiros maiores que zero
-    unsigned char byte; // unsigned char vai de 0 a 255 
+    unsigned char bytes[4096]; // unsigned char vai de 0 a 255 
+    size_t quant_bytes_lidos; // quantidade de bytes lida pelo fread
+
+    unsigned char byte = 0;
 
     char **tabela;
-    char *texto = malloc(sizeof(char));
-    texto[0] = '\0';
+    char *texto_compactado = malloc(sizeof(char));
+    texto_compactado[0] = '\0';
 
     for(int i = 1; i < argc; i++){
 
@@ -356,16 +454,107 @@ int main(int argc, char *argv[]){ // EX: ./argumentos.exe arquivo02.png | argc =
         inicializar_lista(&lista);
         inicializar_arvore(&arv_huffman);
 
-        if(strstr(".huff", argv[i])){ // se .huff descompactar
+        if(strstr(argv[i], ".huff")){ // se .huff descompactar
 
-            // descompactar();
+            int tam_arv = 0; // Guardar tamanho da arvore
+            int trash = 0; // Guardar lixo
+
+            // ==== INICIO ======================== PEGAR OS 2 PRIMEIROS BYTES (LIXO + TAM_ARVORE) ==================================
+
+            char *byte_texto = malloc(14 * sizeof(char));
+            byte_texto[0] = '\0';
+
+            char bits_lixo[4];
+            bits_lixo[0] = '\0';
+
+            if(fread(&byte, 1, 1, arquivo) == 1){
+
+                char *bits_8 = converte_para_binario(byte, 8);
+                strcat(byte_texto, bits_8); // byte_texto recebe o byte ex: 10100000
+                byte_texto[8] = '\0';
+
+                strncpy(bits_lixo, byte_texto, 3); // copia os 3 primeiros bits para bits_lixo ex: 101
+                bits_lixo[3] = '\0';
+
+                memmove(byte_texto, byte_texto + 3, 5); // move os 5 bits restantes para o início de byte_texto
+                byte_texto[5] = '\0';
+
+                //memmove(byte_texto, byte_texto + 3, strlen(byte_texto + 3) + 1); // retira os 3 primeiros bits do lixo dos 8 bits ex: 00000
+
+                trash = binario_para_unsigned_int(bits_lixo, 3);
+
+                free(bits_8);
+            }
+
+            if(fread(&byte, 1, 1, arquivo) == 1){
+
+                char *bits_8 = converte_para_binario(byte, 8);
+
+                strcat(byte_texto, bits_8); // concatena outro byte
+                byte_texto[13] = '\0';
+
+                tam_arv = binario_para_unsigned_int(byte_texto, 13);
+
+                free(bits_8);
+            }
+
+            //printf("%d, %d ", trash, tam_arv);
+                
+            // ==== FIM =====================================================================================
+
+            // ==== INICIO ======================== RECONSTRUIR ARVORE ==============================================
+
+            arv_huffman.raiz = reconstruir_arvore(arquivo, tam_arv);
+
+            //imprimir_pre_ordem(arv_huffman.raiz);
+
+            // ==== FIM =====================================================================================
+
+            // ==== INICIO ======================== LENDO OS BYTES COMPACTADOS ==============================================
+
+            char *texto_comprimido = malloc(sizeof(char));
+            texto_comprimido[0] = '\0';
+
+            int tam_texto_comprimido = 0;
+
+            while ((quant_bytes_lidos = fread(bytes, 1, 4096, arquivo)) > 0) {
+                
+                for (size_t i = 0; i < quant_bytes_lidos; i++) {
+
+                    tam_texto_comprimido += 8;
+                    
+                    texto_comprimido = realloc(texto_comprimido, (tam_texto_comprimido + 1) * sizeof(char));
+
+                    char *bits_8 = converte_para_binario(bytes[i], 8);
+
+                    strcat(texto_comprimido, bits_8);
+
+                    free(bits_8);
+                }
+            }
+
+            //printf(" %s %d", texto_comprimido, strlen(texto_comprimido));
+
+            // ==== FIM =====================================================================================
+
+            // ==== INICIO ======================== DESCOMPACTANDO TEXTO E GERAR ARQUIVO =============================
+
+            FILE *saida = fopen("Saida/arquivo02.png", "wb");
+
+            descompactar_texto(texto_comprimido, arv_huffman.raiz, trash, saida);
+
+            // ==== FIM =====================================================================================
 
         } else { // compactar
 
             // ==== INICIO ======================== FREQUENCIA DE CADA BYTE ==================================
 
-            while (fread(&byte, 1, 1, arquivo) == 1) { // Ler e contabiliza a frequencia de cada byte 
-                frequencia[byte]++;
+            while ((quant_bytes_lidos = fread(bytes, 1, 4096, arquivo)) > 0) {
+                
+                for (size_t i = 0; i < quant_bytes_lidos; i++) {
+                    
+                    frequencia[bytes[i]]++;
+                }
             }
 
             // ==== FIM =====================================================================================
@@ -377,8 +566,6 @@ int main(int argc, char *argv[]){ // EX: ./argumentos.exe arquivo02.png | argc =
                 if(frequencia[i] > 0){
 
                     inserir_na_lista_ordenado(&lista, i, frequencia[i], NULL);
-
-                    //printf("freq: %u byte: %u\n", frequencia[i], i);
                 }
 
                 //printf("byte(%d): %d\n", i, frequencia[i]);
@@ -410,13 +597,19 @@ int main(int argc, char *argv[]){ // EX: ./argumentos.exe arquivo02.png | argc =
 
             arquivo = fopen(argv[i], "rb"); // abre o arquivo novamente do inicio
 
-            while (fread(&byte, 1, 1, arquivo) == 1) { // Ler e contabiliza a frequencia de cada byte 
+
+            while ((quant_bytes_lidos = fread(bytes, 1, 4096, arquivo)) > 0) {
                 
-                tam_texto += strlen(tabela[byte]);
+                for (size_t i = 0; i < quant_bytes_lidos; i++) {
+                    
+                    tam_texto += strlen(tabela[bytes[i]]);
 
-                texto = realloc(texto, (tam_texto + 1) * sizeof(char));
+                    texto_compactado = realloc(texto_compactado, (tam_texto + 1) * sizeof(char));
 
-                strcat(texto, tabela[byte]);
+                    char *bits_8 = tabela[bytes[i]];
+
+                    strcat(texto_compactado, bits_8);
+                }
             }
 
             int trash = 8 - (tam_texto % 8); // bits lixo 
@@ -425,33 +618,44 @@ int main(int argc, char *argv[]){ // EX: ./argumentos.exe arquivo02.png | argc =
 
             tam_texto += trash;
 
-            texto = realloc(texto, (tam_texto + 1) * sizeof(char));
+            texto_compactado = realloc(texto_compactado, (tam_texto + 1) * sizeof(char));
 
             for(int i = trash; i > 0; i--){
 
-                strcat(texto, "0");
+                strcat(texto_compactado, "0");
             }
 
             // ==== FIM =====================================================================================
 
             // ==== INICIO ======================== GERAR O ARQUIVO COMPACTADO ================================
 
-            FILE *saida = fopen("Saida/arquivo_compactado.huff", "wb");
+            char nome_saida[150];
 
-            escrever_arquivo_compactado(saida, trash, arv_huffman.tam_arvore, arv_huffman.raiz, texto, tam_texto);
+            char base[100]; 
+
+            strncpy(base, argv[i], (strlen(argv[i]) - strlen(strstr(argv[i], ".")))); // ex: se argv[i] = arquivo.png || base = arquivo
+
+            base[strlen(base)] = '\0';
+
+            sprintf(nome_saida, "Saida/%s.huff", base); // se base = arquivo || nome_saida = Saida/arquivo.huff
+
+            FILE *saida = fopen(nome_saida, "wb");
+
+            escrever_arquivo_compactado(saida, trash, arv_huffman.tam_arvore, arv_huffman.raiz, texto_compactado, tam_texto);
 
             // ==== FIM =====================================================================================
-            
+
+            trash = 0;
+            tam_texto = 0;
             fclose(saida);
+            liberar_tabela(tabela);
         }
 
         zerar_frequencia(frequencia);
-        liberar_tabela(tabela);
         free(lista.inicio);
         free(arv_huffman.raiz);
         fclose(arquivo);
         
-
         //printf("\n");
     }
 
