@@ -13,7 +13,6 @@
 FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) { 
     FILE *arquivo = fopen(nome_arquivo, "r"); 
     
-    // Agora, o arquivo deve ser encontrado no caminho exato fornecido.
 
     if (!arquivo) {
         fprintf(stderr, "Erro ao abrir arquivo: %s\n", nome_arquivo); 
@@ -72,23 +71,17 @@ FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) {
         return NULL;
     }
     int num_literais_acumulados = 0;
-    char linha_para_aviso[1024];
 
     while (fgets(linha, sizeof(linha), arquivo) && indice_clausula < formula->numero_clausulas) {
         if (linha[0] == 'c' || linha[0] == 'p') {
             continue; 
         }
-        // Copia o conteúdo da linha para linha_para_aviso, garantindo que ela esteja terminada com '\0'.  
-        strncpy(linha_para_aviso, linha, sizeof(linha_para_aviso) - 1);
-        linha_para_aviso[sizeof(linha_para_aviso) - 1] = '\0';
-        char *newline_char = strchr(linha_para_aviso, '\n');  // Remove os caracteres de nova linha ('\n') do final da string, caso existam.
-        if (newline_char) *newline_char = '\0';
-        newline_char = strchr(linha_para_aviso, '\r');// Remove os caracteres de retorno ('\r') do final da string compatibilidade com windows.
-        if (newline_char) *newline_char = '\0';
+        // Remove caracteres de nova linha ou retorno de carro do final da linha.(retorno do carro é utilizado em sistemas Windows para indicar o fim de uma linha)
+        linha[strcspn(linha, "\r\n")] = 0;
 
-        char *copia_linha_para_literais = malloc(strlen(linha) + 1); // Aloca memória para a string
+        char *copia_linha_para_literais = malloc(strlen(linha) + 1); // Aloca memória para a string (usando a 'linha' limpa)
         if (copia_linha_para_literais == NULL) {
-            fprintf(stderr, "Erro ao alocar memória para copia_linha_para_literais em ler_formula_dimacs.\n");
+            fprintf(stderr, "Falha ao alocar memória para a cópia da linha (em ler_formula_dimacs).\n");
             for (int i = 0; i < indice_clausula; ++i) {
                 if (formula->clausulas_da_formula[i]) free(formula->clausulas_da_formula[i]);
             }
@@ -110,8 +103,8 @@ FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) {
             // Isso evita estouro do buffer e garante que apenas literais válidos sejam processados.
             // Caso o limite seja excedido, exibe uma mensagem de erro e interrompe o processamento.
             if (num_literais_acumulados >= formula->numero_variaveis +1) { 
-                 fprintf(stderr, "[ERROR parser] Cláusula %d (linha: '%s') excedeu o buffer de literais (%d). Abortando.\n",
-                        indice_clausula + 1, linha_para_aviso, formula->numero_variaveis + 1);
+                 fprintf(stderr, "[ERRO no Parser] A cláusula %d (linha: '%s') excedeu o tamanho do buffer de literais (%d). Abortando.\n",
+                        indice_clausula + 1, linha, formula->numero_variaveis + 1); // Usa 'linha' diretamente
                 free(copia_linha_para_literais);
                 for (int i = 0; i < indice_clausula; ++i) if(formula->clausulas_da_formula[i]) free(formula->clausulas_da_formula[i]);
                 free(formula->clausulas_da_formula);

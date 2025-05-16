@@ -44,10 +44,6 @@ static bool eh_atribuicao_consistente(const int *atribuicoes, const FormulaCNF *
         }
 
         for (int indice_literal = 0; ; indice_literal++) {
-            if (indice_literal > (formula->numero_variaveis + 10)) { 
-                return false; 
-            }
-
             int literal_atual = formula->clausulas_da_formula[indice_clausula][indice_literal];
 
             if (literal_atual == 0) { 
@@ -308,7 +304,6 @@ ArvoreDecisao* criar_arvore_para_resolucao(FormulaCNF *formula) {
         return NULL;
     }
     arvore->numero_variaveis_formula = formula->numero_variaveis;
-    arvore->nos_explorados_contagem = 0;
 
     int *atribuicoes_iniciais = (int*)malloc(formula->numero_variaveis * sizeof(int));
     if (!atribuicoes_iniciais) {
@@ -325,7 +320,6 @@ ArvoreDecisao* criar_arvore_para_resolucao(FormulaCNF *formula) {
         free(arvore);
         return NULL;
     }
-    arvore->nos_explorados_contagem++;
     return arvore;
 }
 

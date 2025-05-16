@@ -51,12 +51,10 @@ typedef struct NoArvoreDecisao {
  * @brief Representa a árvore de decisão completa usada pelo solver SAT.
  * @var ArvoreDecisao::no_raiz Ponteiro para o nó raiz da árvore.
  * @var ArvoreDecisao::numero_variaveis_formula O número total de variáveis na fórmula CNF que esta árvore está tentando resolver.
- * @var ArvoreDecisao::nos_explorados_contagem Um contador para o número de nós que foram explorados/criados (para estatísticas/debug).
  */
 typedef struct {
     NoArvoreDecisao *no_raiz;       // Raiz da árvore
     int numero_variaveis_formula;         // Número de variáveis na fórmula
-    int nos_explorados_contagem;   // Contador de nós explorados
 } ArvoreDecisao;
 
 // Funções do parser
