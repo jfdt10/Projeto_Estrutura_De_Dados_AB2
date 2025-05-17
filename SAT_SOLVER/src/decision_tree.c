@@ -14,7 +14,7 @@ unsigned long total_nos_criados = 0;
 // Protótipos de funções estáticas (internas ao módulo)
 static NoArvoreDecisao* buscar_solucao_recursivo(NoArvoreDecisao *no_atual);
 static void liberar_no_recursivo(NoArvoreDecisao *no_atual);
-static NoArvoreDecisao* alocar_no(int variavel, int valor, const int *atribuicoes_pai, int total_variaveis, int profundidade_param);
+static NoArvoreDecisao* alocar_no(int variavel, int valor, const int *atribuicoes_pai, int total_variaveis);
 static bool eh_atribuicao_consistente(const int *atribuicoes, const FormulaCNF *formula);
 static int escolher_proxima_variavel(const int *atribuicoes, int total_variaveis);
 
@@ -247,10 +247,9 @@ bool resolver_literais_puros(FormulaCNF *formula, int *atribuicoes) {
  * @param valor O valor atribuído à variável (0 ou 1).
  * @param atribuicoes_pai Array de atribuições do nó pai.
  * @param total_variaveis Número total de variáveis na fórmula.
- * @param profundidade_param A profundidade deste nó na árvore.
  * @return Ponteiro para o novo nó alocado, ou NULL se a alocação falhar ou o limite de nós for atingido.
  */
-NoArvoreDecisao* alocar_no(int variavel, int valor, const int *atribuicoes_pai, int total_variaveis, int profundidade_param) {
+NoArvoreDecisao* alocar_no(int variavel, int valor, const int *atribuicoes_pai, int total_variaveis) {
     // Verifica se o limite de nós foi atingido
     if (total_nos_criados >= MAX_NOS) { 
         return NULL;
@@ -268,7 +267,6 @@ NoArvoreDecisao* alocar_no(int variavel, int valor, const int *atribuicoes_pai, 
     novo_no->eh_no_solucao = false;
     novo_no->no_esquerdo = NULL;
     novo_no->no_direito = NULL;
-    novo_no->profundidade_do_no = profundidade_param; 
 
     novo_no->atribuicoes_do_no = (int*)malloc(total_variaveis * sizeof(int));
     if (!novo_no->atribuicoes_do_no) {
@@ -313,7 +311,7 @@ ArvoreDecisao* criar_arvore_para_resolucao(FormulaCNF *formula) {
     for (int i = 0; i < formula->numero_variaveis; i++) {
         atribuicoes_iniciais[i] = 2;
     }
-    arvore->no_raiz = alocar_no(0, 0, atribuicoes_iniciais, formula->numero_variaveis, 0);
+    arvore->no_raiz = alocar_no(0, 0, atribuicoes_iniciais, formula->numero_variaveis);
     free(atribuicoes_iniciais);
 
     if (!arvore->no_raiz) {
@@ -333,55 +331,66 @@ ArvoreDecisao* criar_arvore_para_resolucao(FormulaCNF *formula) {
  * @param total_variaveis Número total de variáveis na fórmula.
  * @return true se uma solução for encontrada a partir deste nó, false caso contrário.
  */
+// Implementa o algoritmo DPLL recursivamente para encontrar uma solução SAT.
 bool construir_arvore_recursivo(NoArvoreDecisao *no_atual, FormulaCNF *formula, int total_variaveis) {
+    // Verifica se a atribuição atual é consistente com a fórmula.
     if (!eh_atribuicao_consistente(no_atual->atribuicoes_do_no, formula)) {
-        return false; 
+        return false; // Conflito: caminho insatisfatível.
     }
 
+    // Aplica propagação unitária para forçar atribuições.
     if (!resolver_unitarias(formula, no_atual->atribuicoes_do_no)) {
-        return false; 
+        return false; // Conflito durante a propagação unitária.
     }
 
+    // Aplica eliminação de literais puros.
     resolver_literais_puros(formula, no_atual->atribuicoes_do_no);
     
+    // Re-verifica consistência após as simplificações.
     if (!eh_atribuicao_consistente(no_atual->atribuicoes_do_no, formula)) {
-        return false; 
+        return false;
     }
 
+    // Escolhe a próxima variável para ramificação.
     int proxima_variavel = escolher_proxima_variavel(no_atual->atribuicoes_do_no, total_variaveis);
 
+    // Se não há mais variáveis para atribuir, é uma solução.
     if (proxima_variavel == 0) { 
-        no_atual->eh_no_solucao = true;
-        return true;
+        no_atual->eh_no_solucao = true; 
+        return true; 
     }
 
+    // Valida a variável escolhida.
     if (proxima_variavel < 1 || proxima_variavel > total_variaveis) {
-        return false; 
+        return false; // Erro na escolha da variável.
     }
     
-    // Tenta o ramo esquerdo (variável = 1)
-    no_atual->no_esquerdo = alocar_no(proxima_variavel, 1, no_atual->atribuicoes_do_no, total_variaveis, no_atual->profundidade_do_no + 1);
+    // Tenta atribuir VERDADEIRO (1) para a próxima variável e explora recursivamente.
+    no_atual->no_esquerdo = alocar_no(proxima_variavel, 1, no_atual->atribuicoes_do_no, total_variaveis);
     if (no_atual->no_esquerdo) {
         if (construir_arvore_recursivo(no_atual->no_esquerdo, formula, total_variaveis)) {
             return true; 
         } else {
+            // Backtrack: libera o nó do ramo esquerdo se não houver solução.
             liberar_no_recursivo(no_atual->no_esquerdo);
             no_atual->no_esquerdo = NULL;
         }
     }
 
-    // Tenta o ramo direito (variável = 0)
-    no_atual->no_direito = alocar_no(proxima_variavel, 0, no_atual->atribuicoes_do_no, total_variaveis, no_atual->profundidade_do_no + 1);
+    // Se o ramo VERDADEIRO falhou, tenta atribuir FALSO (0) e explora recursivamente.
+    no_atual->no_direito = alocar_no(proxima_variavel, 0, no_atual->atribuicoes_do_no, total_variaveis);
     if (no_atual->no_direito) {
         if (construir_arvore_recursivo(no_atual->no_direito, formula, total_variaveis)) {
             return true; 
         } else {
+            // Backtrack: libera o nó do ramo direito se não houver solução.
             liberar_no_recursivo(no_atual->no_direito);
             no_atual->no_direito = NULL;
         }
     }
     
-    return false; 
+    // Nenhum dos ramos levou a uma solução.
+    return false; // Backtrack: Nenhuma solução a partir deste nó.
 }
 
 /**

@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     FormulaCNF *formula = ler_formula_dimacs(nome_arquivo);
     
     if (!formula) {
-        return EXIT_FAILURE;
+        return EXIT_FAILURE;// Macro de stdlib.h que tem valor 1(indica falha).
     }
 
     int *atribuicoes = (int *)malloc((formula->numero_variaveis + 1) * sizeof(int));
@@ -40,5 +40,5 @@ int main(int argc, char *argv[]) {
     free(atribuicoes);
     liberar_formula_cnf(formula);
     
-    return EXIT_SUCCESS;
+    return EXIT_SUCCESS; // Macro de stdPPlib.h que tem valor 0(indica sucesso).
 }

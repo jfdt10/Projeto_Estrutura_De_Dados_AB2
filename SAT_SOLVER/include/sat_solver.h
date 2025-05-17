@@ -30,7 +30,6 @@ typedef struct {
  * @var NoArvoreDecisao::atribuicoes_do_no Um array representando o estado completo das atribuições de todas
  *                                        as variáveis neste ponto da árvore. (0=falso, 1=verdadeiro, 2=não atribuído).
  * @var NoArvoreDecisao::eh_no_solucao Flag booleana que indica se este nó representa uma atribuição completa e satisfatória.
- * @var NoArvoreDecisao::profundidade_do_no A profundidade do nó na árvore (raiz = 0).
  * @var NoArvoreDecisao::no_esquerdo Ponteiro para o filho esquerdo (geralmente representa a atribuição da próxima variável como verdadeira).
  * @var NoArvoreDecisao::no_direito Ponteiro para o filho direito (geralmente representa a atribuição da próxima variável como falsa).
  */
@@ -39,7 +38,6 @@ typedef struct NoArvoreDecisao {
     int valor_atribuido_no;            // Valor atribuído (0 ou 1)
     int *atribuicoes_do_no;      // Array com a atribuição atual
     bool eh_no_solucao;     // Indica se este nó é uma solução
-    int profundidade_do_no;          // Profundidade do nó na árvore
 
     struct NoArvoreDecisao *no_esquerdo;  // Filho esquerdo (próxima variável = 1)
     struct NoArvoreDecisao *no_direito;   // Filho direito (próxima variável = 0)

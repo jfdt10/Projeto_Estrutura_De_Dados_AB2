@@ -133,7 +133,7 @@ int main() {
     // Isso garante que os números gerados sejam diferentes a cada execução.
     srand((unsigned int)time(NULL)); 
 
-    printf("Iniciando execucao unica...\n");
+
 
     // Aloca memória para um array que armazenará os valores únicos gerados.
     int *valores = (int *)malloc(TAMANHO_MAXIMO * sizeof(int));
@@ -144,7 +144,6 @@ int main() {
         return 1; // Retorna 1 indicando erro.
     }
 
-    printf("Gerando %d valores aleatorios unicos para insercao (metodo O(N^2))...\n", TAMANHO_MAXIMO);
     // Loop para gerar TAMANHO_MAXIMO números aleatórios únicos.
     for (int i = 0; i < TAMANHO_MAXIMO; i++) {
         int novo_valor;
@@ -163,21 +162,21 @@ int main() {
         } while (duplicado); // Repete se o valor for duplicado.
         valores[i] = novo_valor; // Armazena o valor único gerado.
     }
-    printf("Valores unicos para insercao gerados.\n");
+   
 
     // Inicializa as cabeças da lista encadeada e da árvore BST como nulas.
     NoLista* lista = NULL;
     NoArvore* arvore = NULL;
 
-    printf("Inserindo %d elementos em ambas as estruturas...\n", TAMANHO_MAXIMO);
+   
     // Loop para inserir os valores gerados na lista encadeada e na árvore BST.
     for (int i = 0; i < TAMANHO_MAXIMO; i++) {
         lista = inserir_lista(lista, valores[i]);
         arvore = inserir_arvore(arvore, valores[i]);
     }
-    printf("Insercao concluida.\n");
+   
 
-    printf("Realizando %d buscas por elementos existentes (com possivel repeticao na escolha)...\n", NUMERO_DE_BUSCAS);
+   
     // Loop para realizar as buscas.
     for (int i = 0; i < NUMERO_DE_BUSCAS; i++) {
         // Escolhe aleatoriamente um índice de um valor já inserido.
@@ -192,16 +191,16 @@ int main() {
         // Escreve os resultados da busca no arquivo CSV.
         fprintf(fp, "%d,%d,%d\n", chave_procurada, compLista, compArvore);
     }
-    printf("Buscas concluidas.\n");
+    
  
     // Libera a memória alocada para a lista, a árvore e o array de valores.
-    liberar_lista(lista);
+     liberar_lista(lista);
     liberar_arvore(arvore);
     free(valores);
 
     // Fecha o arquivo CSV.
     fclose(fp);
     // Mensagem de confirmação atualizada para o nome correto do arquivo.
-    printf("Dados salvos em dados_busca.csv\n");
+
     return 0;
 }

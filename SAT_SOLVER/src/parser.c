@@ -26,11 +26,11 @@ FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) {
     }
     // inicializa os membros da estrutura FormulaCNF número de variáveis e claúsulas inicialmente como 0 e o ponteiro clausulas_da_formula como NULL(não apontando para nenhuma região específica da memória).
     formula->numero_variaveis = 0;    
-    formula->numero_clausulas = 0;    
+    formula->numero_clausulas = 0; 
     formula->clausulas_da_formula = NULL; 
 
     // Primeira passagem: conta variáveis e cláusulas
-    char linha[1024]; 
+    char linha[1024]; // Buffer para ler linhas do arquivo
     while (fgets(linha, sizeof(linha), arquivo)) {
         if (linha[0] == 'c') {
             continue; 
@@ -96,7 +96,7 @@ FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) {
         // Divide a linha em tokens usando espaços, tabulações, quebras de linha e retornos do cursor  como delimitadores.
         // Cada token representa um literal ou o terminador '0' que indica o fim da cláusula.
         char *token = strtok(copia_linha_para_literais, " \t\n\r"); 
-        while (token) {
+        while (token) {  
             int literal_lido = atoi(token); // Converte a string do token para um inteiro.
 
             // Verifica se o número de literais acumulados excede o tamanho do buffer permitido.
@@ -121,7 +121,7 @@ FormulaCNF* ler_formula_dimacs(const char *nome_arquivo) {
                 int contagem_validos = 0;
                 for(int k=0; k < num_literais_acumulados; ++k) {
                     int l_val = acumulador_literais[k];
-                    int var_abs = abs(l_val);
+                    int var_abs = abs(l_val); 
                     if (l_val == 0) { 
                         literais_validos_na_clausula_atual[contagem_validos++] = 0;
                         break; 
