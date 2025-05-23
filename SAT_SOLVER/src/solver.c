@@ -20,14 +20,16 @@ bool resolver_sat_com_arvore_otimizada(FormulaCNF *formula, int *atribuicoes_fin
     }
 
     if (formula->numero_variaveis == 0) {
+        // Se não há variáveis, a fórmula (vazia) é trivialmente satisfatível.
+        // Nenhuma atribuição precisa ser feita ou verificada.
         return true; 
     }
 
-    // Inicializa todas as atribuições com um valor que indique "não atribuído" (ex: 2)
-    // Isso é importante para a lógica da árvore de decisão e para a impressão final
-    for (int i = 0; i <= formula->numero_variaveis; i++) { // <= para cobrir de 1 a N
+    // Inicializa todas as atribuições (1 a N) com um valor que indique "não atribuído" (ex: 2)
+    for (int i = 1; i <= formula->numero_variaveis; i++) {
         atribuicoes_finais[i] = 2; // 2 significa não atribuído
     }
+   
     
     ArvoreDecisao *arvore = criar_arvore_para_resolucao(formula);
     if (!arvore) {
@@ -39,10 +41,8 @@ bool resolver_sat_com_arvore_otimizada(FormulaCNF *formula, int *atribuicoes_fin
     if (tem_solucao) {
         NoArvoreDecisao *no_solucao = buscar_solucao_na_arvore(arvore);
         if (no_solucao) {
-            // Copia as atribuições do nó solução para o array final
-            for (int i = 0; i < formula->numero_variaveis; i++) {
-                int valor_final = no_solucao->atribuicoes_do_no[i];
-                atribuicoes_finais[i + 1] = valor_final;
+            for (int i = 1; i <= formula->numero_variaveis; i++) {
+                atribuicoes_finais[i] = no_solucao->atribuicoes_do_no[i];
             }
         }
     }
