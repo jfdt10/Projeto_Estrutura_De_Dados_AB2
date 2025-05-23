@@ -56,12 +56,15 @@ static bool eh_atribuicao_consistente(const int *atribuicoes, const FormulaCNF *
                 return false; 
             }
 
-            if (atribuicoes[variavel_atual - 1] == 2) { 
+           
+            if (atribuicoes[variavel_atual] == 2) { 
                 todas_variaveis_atribuidas_na_clausula = false;
-            } else if ((literal_atual > 0 && atribuicoes[variavel_atual - 1] == 1) || 
-                       (literal_atual < 0 && atribuicoes[variavel_atual - 1] == 0)) { 
-                clausula_satisfeita = true;
-                break; 
+            } else {
+                if ((literal_atual > 0 && atribuicoes[variavel_atual] == 1) ||
+                    (literal_atual < 0 && atribuicoes[variavel_atual] == 0)) {
+                    clausula_satisfeita = true;
+                    break; 
+                }
             }
         } 
 
@@ -80,9 +83,10 @@ static bool eh_atribuicao_consistente(const int *atribuicoes, const FormulaCNF *
  * @return O índice (baseado em 1) da próxima variável a ser atribuída, ou 0 se todas estiverem atribuídas.
  */
 static int escolher_proxima_variavel(const int *atribuicoes, int total_variaveis) {
-    for (int i = 0; i < total_variaveis; i++) { 
+    // Itera de 1 a total_variaveis
+    for (int i = 1; i <= total_variaveis; i++) {
         if (atribuicoes[i] == 2) { 
-            return i + 1; 
+            return i; 
         }
     }
     return 0; 
@@ -123,12 +127,12 @@ bool resolver_unitarias(FormulaCNF* formula, int* variaveis_atribuidas) {
                     continue; 
                 }
 
-                if (variaveis_atribuidas[variavel-1] == 2) {
+                if (variaveis_atribuidas[variavel] == 2) {
                     literais_nao_atribuidos++;
                     literal_unitario = literal; 
                 } else {
-                    bool atribuicao_correta = (literal > 0 && variaveis_atribuidas[variavel-1] == 1) ||
-                                              (literal < 0 && variaveis_atribuidas[variavel-1] == 0);
+                    bool atribuicao_correta = (literal > 0 && variaveis_atribuidas[variavel] == 1) ||
+                                              (literal < 0 && variaveis_atribuidas[variavel] == 0);
                     if (atribuicao_correta) {
                         clausula_satisfeita = true;
                         break; 
@@ -142,15 +146,16 @@ bool resolver_unitarias(FormulaCNF* formula, int* variaveis_atribuidas) {
                 var_unitaria = abs(literal_unitario);
                 valor_unitario = (literal_unitario > 0) ? 1 : 0;
 
-                if (variaveis_atribuidas[var_unitaria-1] == 2) {
-                    variaveis_atribuidas[var_unitaria-1] = valor_unitario;
+                if (variaveis_atribuidas[var_unitaria] == 2) {
+                    variaveis_atribuidas[var_unitaria] = valor_unitario;
                     
                     mudanca_feita_na_passada_geral = true;
 
+                   
                     if (!eh_atribuicao_consistente(variaveis_atribuidas, formula)) {
                         return false; 
                     }
-                } else if (variaveis_atribuidas[var_unitaria-1] != valor_unitario) {
+                } else if (variaveis_atribuidas[var_unitaria] != valor_unitario) {
                     return false; 
                 }
             } else if (!clausula_satisfeita && literais_nao_atribuidos == 0 && total_literais_clausula > 0 && literais_falsos == total_literais_clausula) {
@@ -199,9 +204,9 @@ bool resolver_literais_puros(FormulaCNF *formula, int *atribuicoes) {
                 return false;
             }
 
-            if (atribuicoes[variavel_atual - 1] != 2) { 
-                if ((literal_atual > 0 && atribuicoes[variavel_atual - 1] == 1) || 
-                    (literal_atual < 0 && atribuicoes[variavel_atual - 1] == 0)) { 
+            if (atribuicoes[variavel_atual] != 2) { 
+                if ((literal_atual > 0 && atribuicoes[variavel_atual] == 1) || 
+                    (literal_atual < 0 && atribuicoes[variavel_atual] == 0)) { 
                     clausula_satisfeita_pela_atribuicao_atual = true;
                     break;
                 }
@@ -213,7 +218,7 @@ bool resolver_literais_puros(FormulaCNF *formula, int *atribuicoes) {
                 int literal_atual = formula->clausulas_da_formula[indice_clausula][indice_literal];
                 int variavel_atual = abs(literal_atual); 
 
-                if (atribuicoes[variavel_atual - 1] == 2) { 
+                if (atribuicoes[variavel_atual] == 2) { 
                     if (literal_atual > 0) {
                         aparece_positivo[variavel_atual] = true;
                     } else {
@@ -225,12 +230,12 @@ bool resolver_literais_puros(FormulaCNF *formula, int *atribuicoes) {
     }
     
     for (int variavel_id = 1; variavel_id <= formula->numero_variaveis; variavel_id++) { 
-        if (atribuicoes[variavel_id - 1] == 2) { 
+        if (atribuicoes[variavel_id] == 2) { 
             if (aparece_positivo[variavel_id] && !aparece_negativo[variavel_id]) {
-                atribuicoes[variavel_id - 1] = 1; 
+                atribuicoes[variavel_id] = 1;
                 atribuiu_algo = true;
             } else if (!aparece_positivo[variavel_id] && aparece_negativo[variavel_id]) {
-                atribuicoes[variavel_id - 1] = 0; 
+                atribuicoes[variavel_id] = 0;
                 atribuiu_algo = true;
             }
         }
@@ -250,39 +255,47 @@ bool resolver_literais_puros(FormulaCNF *formula, int *atribuicoes) {
  * @return Ponteiro para o novo nó alocado, ou NULL se a alocação falhar ou o limite de nós for atingido.
  */
 NoArvoreDecisao* alocar_no(int variavel, int valor, const int *atribuicoes_pai, int total_variaveis) {
-    // Verifica se o limite de nós foi atingido
-    if (total_nos_criados >= MAX_NOS) { 
+    if (total_nos_criados >= MAX_NOS) {
         return NULL;
     }
 
     NoArvoreDecisao *novo_no = (NoArvoreDecisao*)malloc(sizeof(NoArvoreDecisao));
     if (!novo_no) {
+        perror("Erro ao alocar memória para NoArvoreDecisao");
         return NULL;
     }
-    
-    total_nos_criados++; // Incrementa o contador de nós criados
+    total_nos_criados++;
 
-    novo_no->variavel_do_no = variavel;
+    // Alocar para total_variaveis + 1 para usar índices de 1 a total_variaveis
+    novo_no->atribuicoes_do_no = (int*)malloc((total_variaveis + 1) * sizeof(int));
+    if (!novo_no->atribuicoes_do_no) {
+        perror("Erro ao alocar memória para atribuições do nó");
+        free(novo_no);
+        return NULL;
+    }
+
+    novo_no->variavel_do_no = variavel; 
     novo_no->valor_atribuido_no = valor;
     novo_no->eh_no_solucao = false;
     novo_no->no_esquerdo = NULL;
     novo_no->no_direito = NULL;
 
-    novo_no->atribuicoes_do_no = (int*)malloc(total_variaveis * sizeof(int));
-    if (!novo_no->atribuicoes_do_no) {
-        free(novo_no); 
-        if (total_nos_criados > 0) { 
-            total_nos_criados--; 
+
+
+
+    if (atribuicoes_pai) {
+        memcpy(novo_no->atribuicoes_do_no, atribuicoes_pai, (total_variaveis + 1) * sizeof(int));
+    } else {
+        // Para o nó raiz ou se não houver pai, inicializa todas as vars (1 a N) como não atribuídas (2)
+        for (int i = 1; i <= total_variaveis; i++) {
+            novo_no->atribuicoes_do_no[i] = 2; // 2 = não atribuído
         }
-        return NULL;
-    }
-    for (int i = 0; i < total_variaveis; i++) {
-        novo_no->atribuicoes_do_no[i] = atribuicoes_pai[i];
     }
 
     if (variavel > 0 && variavel <= total_variaveis) {
-        novo_no->atribuicoes_do_no[variavel - 1] = valor;
+        novo_no->atribuicoes_do_no[variavel] = valor;
     }
+
     return novo_no;
 }
 
@@ -303,14 +316,17 @@ ArvoreDecisao* criar_arvore_para_resolucao(FormulaCNF *formula) {
     }
     arvore->numero_variaveis_formula = formula->numero_variaveis;
 
-    int *atribuicoes_iniciais = (int*)malloc(formula->numero_variaveis * sizeof(int));
+    int *atribuicoes_iniciais = (int*)malloc((formula->numero_variaveis + 1) * sizeof(int));
     if (!atribuicoes_iniciais) {
         free(arvore);
         return NULL;
     }
-    for (int i = 0; i < formula->numero_variaveis; i++) {
-        atribuicoes_iniciais[i] = 2;
+   
+    for (int i = 1; i <= formula->numero_variaveis; i++) {
+        atribuicoes_iniciais[i] = 2; 
     }
+
+    
     arvore->no_raiz = alocar_no(0, 0, atribuicoes_iniciais, formula->numero_variaveis);
     free(atribuicoes_iniciais);
 
